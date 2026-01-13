@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automattuner Core</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Orbitron:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="background-mesh"></div>
+    <div class="scanline"></div>
+
+    <div class="app-container">
+        <header class="glass-header">
+            <div class="logo-area">
+                <i class="fa-solid fa-robot fa-shake-hover"></i>
+                <span class="brand-text">AUTOMATTUNER <span class="badge">PRO</span></span>
+            </div>
+            <div class="status-indicator">
+                <span class="pulse"></span> SYSTEM ONLINE
+            </div>
+        </header>
+
+        <main class="main-content">
+            <section class="hero-section">
+                <h1 class="Cyber-glitch" data-text="INTELLIGENT TUNING ENGINE">INTELLIGENT TUNING ENGINE</h1>
+                <p class="subtitle">Next-Generation Intune Optimization & Automation Protocol</p>
+            </section>
+
+            <div class="dashboard-grid">
+                <!-- Control Panel -->
+                <div class="glass-card control-panel">
+                    <div class="card-header">
+                        <i class="fa-solid fa-terminal"></i>
+                        <h3>Command Center</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="runForm">
+                            <div class="input-group">
+                                <label for="tenantId">TARGET TENANT ID</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-fingerprint icon"></i>
+                                    <input type="text" id="tenantId" placeholder="Enter Tenant UUID..."
+                                        autocomplete="off">
+                                    <div class="input-border"></div>
+                                </div>
+                            </div>
+                            <button type="submit" class="cyber-btn" id="executeBtn">
+                                <span class="btn-content"><i class="fa-solid fa-bolt"></i> INITIATE SEQUENCE</span>
+                                <span class="btn-glitch"></span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Live Log Terminal -->
+                <div class="glass-card terminal-window">
+                    <div class="terminal-header">
+                        <div class="dots">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                        </div>
+                        <span class="terminal-title">>> SYSTEM_OUTPUT.log</span>
+                    </div>
+                    <div class="terminal-body" id="outputLog">
+                        <div class="log-line text-muted">> Waiting for command input...</div>
+                        <span class="cursor">_</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/script.js"></script>
+</body>
+
+</html>
