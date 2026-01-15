@@ -59,16 +59,53 @@
                     </div>
                     <div class="card-body">
                         <form id="runForm">
-                             <div class="input-group">
-                                <label for="tenantId">TARGET TENANT ID</label>
+                            <!-- App IDs -->
+                            <div class="input-group">
+                                <label for="appIds">APP IDS (COMMA-SEPARATED)</label>
                                 <div class="input-wrapper">
-                                    <i class="fa-solid fa-fingerprint icon"></i>
-                                    <input type="text" id="tenantId" placeholder="Using your tenant: {{ user.tid }}"
-                                        value="{{ user.tid }}"
-                                        autocomplete="off" disabled>
+                                    <i class="fa-solid fa-cogs icon"></i>
+                                    <textarea id="appIds" placeholder="e.g., Mozilla.Firefox,Zoom.Zoom" rows="3"></textarea>
                                     <div class="input-border"></div>
                                 </div>
                             </div>
+
+                            <!-- Version -->
+                            <div class="input-group">
+                                <label for="version">VERSION (OPTIONAL)</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-code-branch icon"></i>
+                                    <input type="text" id="version" placeholder="Leave empty for latest">
+                                    <div class="input-border"></div>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <!-- Architecture -->
+                                <div class="input-group">
+                                    <label for="architecture">ARCHITECTURE</label>
+                                    <div class="input-wrapper">
+                                        <i class="fa-solid fa-microchip icon"></i>
+                                        <select id="architecture">
+                                            <option value="x64" selected>x64 (Default)</option>
+                                            <option value="x86">x86</option>
+                                            <option value="arm64">arm64</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Installer Context -->
+                                <div class="input-group">
+                                    <label for="installerContext">CONTEXT</label>
+                                    <div class="input-wrapper">
+                                        <i class="fa-solid fa-users icon"></i>
+                                        <select id="installerContext">
+                                            <option value="system" selected>System (Default)</option>
+                                            <option value="user">User</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
                             <button type="submit" class="cyber-btn" id="executeBtn">
                                 <span class="btn-content"><i class="fa-solid fa-bolt"></i> INITIATE SEQUENCE</span>
                                 <span class="btn-glitch"></span>
