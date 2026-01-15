@@ -3,6 +3,7 @@ import os
 import sys
 import uuid
 import msal
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Ensure app can find engine
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -10,6 +11,10 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from engine.automattuner import run as run_engine
 
 app = Flask(__name__, template_folder='../web/templates', static_folder='../web/static')
+
+# Add ProxyFix middleware to handle headers from Azure's proxy
+# This ensures url_for() generates https URLs when deployed
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # --- MSAL MULTI-TENANT CONFIGURATION ---
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "super-secret-key-for-dev")
