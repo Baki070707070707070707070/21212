@@ -14,7 +14,7 @@
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
@@ -27,12 +27,24 @@
                 <i class="fa-solid fa-robot fa-shake-hover"></i>
                 <span class="brand-text">AUTOMATTUNER <span class="badge">PRO</span></span>
             </div>
-            <div class="status-indicator">
-                <span class="pulse"></span> SYSTEM ONLINE
+            {% if is_authenticated %}
+            <div class="user-info">
+                <span>Welcome, {{ user.name }}</span>
+                <a href="/logout" class="cyber-btn auth-btn">
+                    <span class="btn-content"><i class="fa-solid fa-sign-out-alt"></i> Logout</span>
+                    <span class="btn-glitch"></span>
+                </a>
             </div>
+            {% else %}
+            <div class="status-indicator">
+                <span class="pulse"></span> SYSTEM OFFLINE
+            </div>
+            {% endif %}
         </header>
 
         <main class="main-content">
+            {% if is_authenticated %}
+            <!-- Authenticated Content -->
             <section class="hero-section">
                 <h1 class="Cyber-glitch" data-text="INTELLIGENT TUNING ENGINE">INTELLIGENT TUNING ENGINE</h1>
                 <p class="subtitle">Next-Generation Intune Optimization & Automation Protocol</p>
@@ -47,12 +59,13 @@
                     </div>
                     <div class="card-body">
                         <form id="runForm">
-                            <div class="input-group">
+                             <div class="input-group">
                                 <label for="tenantId">TARGET TENANT ID</label>
                                 <div class="input-wrapper">
                                     <i class="fa-solid fa-fingerprint icon"></i>
-                                    <input type="text" id="tenantId" placeholder="Enter Tenant UUID..."
-                                        autocomplete="off">
+                                    <input type="text" id="tenantId" placeholder="Using your tenant: {{ user.tid }}"
+                                        value="{{ user.tid }}"
+                                        autocomplete="off" disabled>
                                     <div class="input-border"></div>
                                 </div>
                             </div>
@@ -80,11 +93,24 @@
                     </div>
                 </div>
             </div>
+            {% else %}
+            <!-- Unauthenticated Content -->
+            <section class="hero-section login-section">
+                <h1 class="Cyber-glitch" data-text="AUTHENTICATION REQUIRED">AUTHENTICATION REQUIRED</h1>
+                <p class="subtitle">Please log in with your Microsoft account to access the Automattuner Engine.</p>
+                <a href="/login" class="cyber-btn auth-btn">
+                    <span class="btn-content"><i class="fa-brands fa-microsoft"></i> Login with Microsoft</span>
+                    <span class="btn-glitch"></span>
+                </a>
+            </section>
+            {% endif %}
         </main>
     </div>
 
     <!-- Scripts -->
-    <script src="/static/script.js"></script>
+    {% if is_authenticated %}
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    {% endif %}
 </body>
 
 </html>
