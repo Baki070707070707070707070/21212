@@ -99,11 +99,15 @@ def execute_automattuner():
         
     try:
         payload = request.json or {}
+        # Add the tenant ID from the logged-in user's session to the payload
         payload['tenant_id'] = session.get("user", {}).get("tid")
         
-        result = run_engine(payload)
+        # Pass the application's own credentials to the engine
+        result = run_engine(payload, client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
         return jsonify(result)
     except Exception as e:
+        # Log the full exception for debugging
+        app.logger.error(f"Error in execute_automattuner: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
