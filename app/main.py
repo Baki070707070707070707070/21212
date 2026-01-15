@@ -1,116 +1,112 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import os
-import sys
-import uuid
+import json
+import logging
+from functools import wraps
+from flask import Flask, session, request, redirect, url_for, Response, jsonify
+from flask_session import Session
 import msal
-from werkzeug.middleware.proxy_fix import ProxyFix
+from app.engine import automattuner
 
-# Ensure app can find engine
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-from engine.automattuner import run as run_engine
+# Create the Flask app
+app = Flask(__name__, static_folder='../web/static', template_folder='../web/templates')
+app.config["SECRET_KEY"] = os.urandom(24)
+app.config["SESSION_TYPE"] = "filesystem"
+Session(app)
 
-app = Flask(__name__, template_folder='../web/templates', static_folder='../web/static')
+# MSAL (Azure AD) configuration
+CLIENT_ID = os.getenv("AZURE_CLIENT_ID")
+CLIENT_SECRET = os.getenv("AZURE_CLIENT_SECRET")
+AUTHORITY = f"https://login.microsoftonline.com/{os.getenv('AZURE_TENANT_ID')}"
+REDIRECT_PATH = "/get_token"
+SCOPE = ["User.Read"]
 
-# Add ProxyFix middleware to handle headers from Azure's proxy
-# This ensures url_for() generates https URLs when deployed
-app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+msal_app = msal.ConfidentialClientApplication(
+    CLIENT_ID, authority=AUTHORITY, client_credential=CLIENT_SECRET
+)
 
-# --- MSAL MULTI-TENANT CONFIGURATION ---
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "super-secret-key-for-dev")
+def require_auth(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user" not in session:
+            logger.warning("Unauthorized access attempt.")
+            # For API requests, return a JSON error
+            if request.path.startswith('/api/'):
+                 return jsonify({"status": "error", "message": "Unauthorized. Please log in first."}), 401
+            # For page loads, redirect to login
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
 
-# These are now configured in the Azure App Service's "Configuration" blade
-# The names must match the App Settings defined in `infra/arm/azuredeploy.json`
-CLIENT_ID = os.environ.get("AZURE_CLIENT_ID")
-CLIENT_SECRET = os.environ.get("AZURE_CLIENT_SECRET")
-
-# For multi-tenant, the authority is the "common" endpoint, not a specific tenant
-AUTHORITY = "https://login.microsoftonline.com/common"
-REDIRECT_PATH = "/get-token"  # Must be registered as a Redirect URI
-
-SCOPE = ["https://graph.microsoft.com/.default"]
-
-# This function creates the MSAL app object on demand
-def _build_msal_app(authority=AUTHORITY):
-    return msal.ConfidentialClientApplication(
-        CLIENT_ID, authority=authority, client_credential=CLIENT_SECRET
-    )
-
-# --- END MSAL CONFIGURATION ---
-
-
-@app.route('/')
+@app.route("/")
+@require_auth
 def index():
-    is_authenticated = "access_token" in session
-    user = session.get("user")
-    return render_template('index.html', is_authenticated=is_authenticated, user=user)
+    return app.send_static_file('index.html')
 
 @app.route("/login")
 def login():
-    # Check if the app is configured before trying to log in
-    if not CLIENT_ID or not CLIENT_SECRET:
-        return "Application is not configured. Please set AAD_CLIENT_ID and AAD_CLIENT_SECRET environment variables.", 500
-
-    session["state"] = str(uuid.uuid4())
-    
-    msal_app = _build_msal_app()
-    auth_url = msal_app.get_authorization_request_url(
-        SCOPE,
-        state=session["state"],
-        redirect_uri=url_for("authorized", _external=True)
-    )
-    return redirect(auth_url)
+    session["flow"] = msal_app.initiate_auth_code_flow(SCOPE, redirect_uri=url_for("authorized", _external=True))
+    return redirect(session["flow"]["auth_uri"])
 
 @app.route(REDIRECT_PATH)
 def authorized():
-    if request.args.get('state') != session.get("state"):
-        return redirect(url_for("index"))
-    
-    if request.args.get('code'):
-        msal_app = _build_msal_app() # Recreate the app object for the request
-        token = msal_app.acquire_token_by_authorization_code(
-            request.args['code'],
-            scopes=SCOPE,
-            redirect_uri=url_for("authorized", _external=True)
-        )
+    try:
+        cache = msal.SerializableTokenCache()
+        if "token_cache" in session:
+            cache.deserialize(session["token_cache"])
+
+        result = msal_app.acquire_token_by_auth_code_flow(session.get("flow", {}), request.args)
         
-        if "error" in token:
-            return f"Error acquiring token: {token['error_description']}"
+        if "error" in result:
+            logger.error(f"Authentication error: {result.get('error_description')}")
+            return f"Login failed: {result.get('error_description')}", 400
+
+        if "access_token" in result:
+            session["token_cache"] = cache.serialize()
+            session["user"] = result.get("id_token_claims")
             
-        session["access_token"] = token['access_token']
-        session["user"] = token.get("id_token_claims")
+    except ValueError as e:
+        logger.error(f"Token acquisition error: {e}")
+        pass # Handle potential state mismatch error
         
     return redirect(url_for("index"))
 
 @app.route("/logout")
 def logout():
     session.clear()
-    
-    logout_url = (
-        f"{AUTHORITY}/oauth2/v2.0/logout"
-        f"?post_logout_redirect_uri={url_for('index', _external=True)}"
-    )
-    return redirect(logout_url)
+    return redirect(
+        AUTHORITY + "/oauth2/v2.0/logout" +
+        "?post_logout_redirect_uri=" + url_for("login", _external=True))
 
-@app.route('/api/run', methods=['POST'])
-def execute_automattuner():
-    if "access_token" not in session:
-        return jsonify({"error": "Unauthorized. Please log in first."}), 401
-        
-    try:
-        payload = request.json or {}
-        # Add the tenant ID from the logged-in user's session to the payload
-        payload['tenant_id'] = session.get("user", {}).get("tid")
-        
-        # Pass the application's own credentials to the engine
-        result = run_engine(payload, client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
-        return jsonify(result)
-    except Exception as e:
-        # Log the full exception for debugging
-        app.logger.error(f"Error in execute_automattuner: {e}", exc_info=True)
-        return jsonify({"error": str(e)}), 500
+@app.route("/api/run", methods=["POST"])
+@require_auth
+def run_engine_endpoint():
+    """
+    This endpoint executes the engine and streams the output back to the client.
+    """
+    payload = request.json
+    
+    # Add tenant_id from the authenticated user's session
+    tenant_id = session.get("user", {}).get("tid")
+    if not tenant_id:
+         return Response("data: ERROR: Could not identify Tenant ID from user session.\\n\\n", mimetype="text/event-stream")
+    payload["tenant_id"] = tenant_id
+
+    def generate_logs():
+        try:
+            # The automattuner.run function is a generator
+            for log_line in automattuner.run(payload, CLIENT_ID, CLIENT_SECRET):
+                # Format as Server-Sent Event (SSE)
+                yield f"data: {log_line}\\n\\n"
+        except Exception as e:
+            logger.error(f"An error occurred during engine execution: {e}", exc_info=True)
+            yield f"data: FATAL ERROR: {e}\\n\\n"
+
+    # Return a streaming response
+    return Response(generate_logs(), mimetype="text/event-stream")
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(debug=True)
