@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const runForm = document.getElementById('runForm');
     const executeBtn = document.getElementById('executeBtn');
+    const tenantIdInput = document.getElementById('tenantId');
     const outputLog = document.getElementById('outputLog');
     const btnContent = executeBtn.querySelector('.btn-content');
 
@@ -8,11 +9,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const addLog = (text, type = 'info') => {
         const line = document.createElement('div');
         line.className = `log-line ${type}`;
+        // Insert before the last child, which is the cursor
         outputLog.insertBefore(line, outputLog.lastElementChild);
 
-        // Typing animation
         let i = 0;
-        const speed = 10; // ms
+        const speed = 10;
 
         function typeWriter() {
             if (i < text.length) {
@@ -27,7 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper: Clear terminal
     const clearTerminal = () => {
-        // Keep only the last child (cursor)
         while (outputLog.children.length > 1) {
             outputLog.removeChild(outputLog.firstChild);
         }
@@ -35,7 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     runForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const tenantId = document.getElementById('tenantId').value;
+        // Tenant ID is now read from the disabled input field, pre-filled by the server
+        const tenantId = tenantIdInput.value;
 
         // UI State: Running
         executeBtn.disabled = true;
@@ -43,14 +44,12 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTerminal();
 
         addLog(`> INITIATING AUTOMATTUNER PROTOCOL...`, 'info');
-        if (tenantId) addLog(`> TARGET TENANT LOCK: [${tenantId}]`, 'info');
+        addLog(`> TARGET TENANT LOCK: [${tenantId}]`, 'info');
 
-        // Simulate some initial "connecting" logs for effect
         setTimeout(() => addLog("> ESTABLISHING SECURE CONNECTION...", 'info'), 500);
         setTimeout(() => addLog("> AUTHENTICATING PRINCIPALS...", 'info'), 1200);
 
         try {
-            // Actual API Call
             const response = await fetch('/api/run', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -59,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const data = await response.json();
 
-            // Wait a bit to show the "connecting" logs before showing result
             setTimeout(() => {
                 if (response.ok) {
                     addLog(`> SUCCESS: ${data.status}`, 'success');
@@ -71,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     addLog(`> ERROR: ${data.error || 'Unknown failure'}`, 'error');
                 }
 
-                // Reset UI
                 executeBtn.disabled = false;
                 btnContent.innerHTML = '<i class="fa-solid fa-bolt"></i> INITIATE SEQUENCE';
                 addLog(`> OPERATION COMPLETE. WAITING...`, 'text-muted');
@@ -83,10 +80,10 @@ document.addEventListener('DOMContentLoaded', () => {
             btnContent.innerHTML = '<i class="fa-solid fa-bolt"></i> INITIATE SEQUENCE';
         }
     });
-
-    // Initial Welcome Message
+    
+    // Initial Welcome Message for authenticated users
     setTimeout(() => {
         addLog("> SYSTEM INITIALIZED.", 'success');
-        addLog("> READY FOR INPUT.", 'info');
+        addLog("> USER AUTHENTICATED. READY FOR INPUT.", 'info');
     }, 500);
 });
