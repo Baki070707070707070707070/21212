@@ -61,6 +61,11 @@ For the CI/CD pipeline to work, set the following secrets in your GitHub Reposit
 ```bash
 # Build
 docker build -t automattuner -f docker/Dockerfile .
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](
+https://portal.azure.com/#create/Microsoft.Template/uri/
+https://raw.githubusercontent.com/Baki070707070707070707070/21212/main/infra/arm/azuredeploy.json
+)
+
 
 # Run
 docker run -p 5000:5000 automattuner
