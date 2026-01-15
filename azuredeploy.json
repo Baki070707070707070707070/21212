@@ -1,0 +1,85 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "westeurope",
+      "metadata": {
+        "description": "Azure region"
+      }
+    },
+    "appName": {
+      "type": "string",
+      "metadata": {
+        "description": "Nome dell'App Service"
+      }
+    },
+    "aadClientId": {
+      "type": "string",
+      "metadata": {
+        "description": "Application (Client) ID - App registrata"
+      }
+    },
+    "aadClientSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Client Secret - App registrata"
+      }
+    },
+    "aadTenantId": {
+      "type": "string",
+      "metadata": {
+        "description": "Tenant ID - App registrata"
+      }
+    },
+    "githubRepoUrl": {
+      "type": "string",
+      "defaultValue": "https://github.com/Baki070707070707070707070/21212",
+      "metadata": {
+        "description": "URL repository GitHub"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-09-01",
+      "name": "[concat(parameters('appName'), '-plan')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "B1"
+      },
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-09-01",
+      "name": "[parameters('appName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', concat(parameters('appName'), '-plan'))]"
+      ],
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(parameters('appName'), '-plan'))]",
+        "siteConfig": {
+          "linuxFxVersion": "DOCKER|automattuner:latest",
+          "appSettings": [
+            { "name": "AAD_CLIENT_ID", "value": "[parameters('aadClientId')]" },
+            { "name": "AAD_CLIENT_SECRET", "value": "[parameters('aadClientSecret')]" },
+            { "name": "AAD_TENANT_ID", "value": "[parameters('aadTenantId')]" },
+            { "name": "GITHUB_REPOSITORY", "value": "[parameters('githubRepoUrl')]" }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "applicationUrl": {
+      "type": "string",
+      "value": "[concat('https://', reference(parameters('appName')).defaultHostName)]"
+    }
+  }
+}
