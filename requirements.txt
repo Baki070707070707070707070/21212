@@ -6,4 +6,6 @@ azure-identity>=1.14.0
 azure-mgmt-resource>=23.0.0
 msal>=1.28.0
 Werkzeug>=2.3.7
+colorama>=0.4.4
+alive-progress>=2.4.1
 # Add original automattuner dependencies here
