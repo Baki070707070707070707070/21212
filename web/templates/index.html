@@ -1,153 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Automattuner Core</title>
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Orbitron:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap"
-        rel="stylesheet">
-    <!-- Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<html lang="en" class="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Automattuner Beta</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            },
+            colors: {
+              primary: {
+                50: '#eff6ff',
+                100: '#dbeafe',
+                500: '#3b82f6',
+                600: '#2563eb',
+                700: '#1d4ed8',
+              },
+              dark: {
+                bg: '#0f172a',
+                card: '#1e293b',
+                border: '#334155',
+              }
+            }
+          },
+        },
+      }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #475569;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "recharts": "https://esm.sh/recharts@^3.6.0"
+  }
+}
+</script>
 </head>
-
-<body>
-    <div class="background-mesh"></div>
-    <div class="scanline"></div>
-
-    <div class="app-container">
-        <header class="glass-header">
-            <div class="logo-area">
-                <i class="fa-solid fa-robot fa-shake-hover"></i>
-                <span class="brand-text">AUTOMATTUNER <span class="badge">PRO</span></span>
-            </div>
-            {% if is_authenticated %}
-            <div class="user-info">
-                <span>Welcome, {{ user.name }}</span>
-                <a href="/logout" class="cyber-btn auth-btn">
-                    <span class="btn-content"><i class="fa-solid fa-sign-out-alt"></i> Logout</span>
-                    <span class="btn-glitch"></span>
-                </a>
-            </div>
-            {% else %}
-            <div class="status-indicator">
-                <span class="pulse"></span> SYSTEM OFFLINE
-            </div>
-            {% endif %}
-        </header>
-
-        <main class="main-content">
-            {% if is_authenticated %}
-            <!-- Authenticated Content -->
-            <section class="hero-section">
-                <h1 class="Cyber-glitch" data-text="INTELLIGENT TUNING ENGINE">INTELLIGENT TUNING ENGINE</h1>
-                <p class="subtitle">Next-Generation Intune Optimization & Automation Protocol</p>
-            </section>
-
-            <div class="dashboard-grid">
-                <!-- Control Panel -->
-                <div class="glass-card control-panel">
-                    <div class="card-header">
-                        <i class="fa-solid fa-terminal"></i>
-                        <h3>Command Center</h3>
-                    </div>
-                    <div class="card-body">
-                        <form id="runForm">
-                            <!-- App IDs -->
-                            <div class="input-group">
-                                <label for="appIds">APP IDS (COMMA-SEPARATED)</label>
-                                <div class="input-wrapper">
-                                    <i class="fa-solid fa-cogs icon"></i>
-                                    <textarea id="appIds" placeholder="e.g., Mozilla.Firefox,Zoom.Zoom" rows="3"></textarea>
-                                    <div class="input-border"></div>
-                                </div>
-                            </div>
-
-                            <!-- Version -->
-                            <div class="input-group">
-                                <label for="version">VERSION (OPTIONAL)</label>
-                                <div class="input-wrapper">
-                                    <i class="fa-solid fa-code-branch icon"></i>
-                                    <input type="text" id="version" placeholder="Leave empty for latest">
-                                    <div class="input-border"></div>
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <!-- Architecture -->
-                                <div class="input-group">
-                                    <label for="architecture">ARCHITECTURE</label>
-                                    <div class="input-wrapper">
-                                        <i class="fa-solid fa-microchip icon"></i>
-                                        <select id="architecture">
-                                            <option value="x64" selected>x64 (Default)</option>
-                                            <option value="x86">x86</option>
-                                            <option value="arm64">arm64</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <!-- Installer Context -->
-                                <div class="input-group">
-                                    <label for="installerContext">CONTEXT</label>
-                                    <div class="input-wrapper">
-                                        <i class="fa-solid fa-users icon"></i>
-                                        <select id="installerContext">
-                                            <option value="system" selected>System (Default)</option>
-                                            <option value="user">User</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button type="submit" class="cyber-btn" id="executeBtn">
-                                <span class="btn-content"><i class="fa-solid fa-bolt"></i> INITIATE SEQUENCE</span>
-                                <span class="btn-glitch"></span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Live Log Terminal -->
-                <div class="glass-card terminal-window">
-                    <div class="terminal-header">
-                        <div class="dots">
-                            <span class="dot red"></span>
-                            <span class="dot yellow"></span>
-                            <span class="dot green"></span>
-                        </div>
-                        <span class="terminal-title">>> SYSTEM_OUTPUT.log</span>
-                    </div>
-                    <div class="terminal-body" id="outputLog">
-                        <div class="log-line text-muted">> Waiting for command input...</div>
-                        <span class="cursor">_</span>
-                    </div>
-                </div>
-            </div>
-            {% else %}
-            <!-- Unauthenticated Content -->
-            <section class="hero-section login-section">
-                <h1 class="Cyber-glitch" data-text="AUTHENTICATION REQUIRED">AUTHENTICATION REQUIRED</h1>
-                <p class="subtitle">Please log in with your Microsoft account to access the Automattuner Engine.</p>
-                <a href="/login" class="cyber-btn auth-btn">
-                    <span class="btn-content"><i class="fa-brands fa-microsoft"></i> Login with Microsoft</span>
-                    <span class="btn-glitch"></span>
-                </a>
-            </section>
-            {% endif %}
-        </main>
-    </div>
-
-    <!-- Scripts -->
-    {% if is_authenticated %}
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
-    {% endif %}
-</body>
-
+  <body class="bg-gray-50 text-slate-900 dark:bg-dark-bg dark:text-slate-100 transition-colors duration-300">
+    <div id="root"></div>
+  </body>
 </html>
